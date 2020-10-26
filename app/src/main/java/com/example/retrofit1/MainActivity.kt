@@ -3,6 +3,9 @@ package com.example.retrofit1
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -17,14 +20,32 @@ class MainActivity : AppCompatActivity() {
         textViewResult = findViewById(R.id.text_view_result)
         textViewResult.text = ""
 
+        val loggingInterceptor = HttpLoggingInterceptor()
+        loggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(object: Interceptor {
+                override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+                    val originRequest = chain.request()
+                    val newRequest = originRequest.newBuilder()
+                        .header("Interceptor-Header", "new")
+                        .build()
+                    return chain.proceed(newRequest)
+                }
+            })
+            .addInterceptor(loggingInterceptor)
+            .build()
+
         val retrofit = Retrofit.Builder()
             .baseUrl("https://jsonplaceholder.typicode.com/")
             .addConverterFactory(GsonConverterFactory.create())
+            .client(okHttpClient)
             .build()
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi::class.java)
 
-        deletePost()
+        updatePostWithPutHeader();
+//        deletePost()
 //        updatePostWithPatch()
 //        updatePostWithPut()
 //        createPostWithMap()
@@ -35,6 +56,12 @@ class MainActivity : AppCompatActivity() {
 //        getPostsWithArray()
 //        getPostsWithMap()
 //        getPosts()
+    }
+
+    private fun updatePostWithPutHeader() {
+        val post = Post(20, null, "updatePostWithPut, should see title null")
+        val call: Call<Post> = jsonPlaceHolderApi.putPost("dyn", 20, post)
+        call.enqueue(createPostCallback())
     }
 
     private fun deletePost() {
@@ -120,6 +147,7 @@ class MainActivity : AppCompatActivity() {
                     textViewResult.text = "Code: " + response.code()
                     return
                 }
+                textViewResult.text = ""
                 val posts = response.body()!!
                 for (post in posts) {
                     var content = ""
@@ -153,7 +181,7 @@ class MainActivity : AppCompatActivity() {
                content += "Title: ${post?.title}\n"
                content += "Text: ${post?.text}\n"
 
-               textViewResult.append(content)
+               textViewResult.text = content
            }
 
            override fun onFailure(call: Call<Post?>, t: Throwable) {
@@ -169,6 +197,7 @@ class MainActivity : AppCompatActivity() {
                     textViewResult.text = "Code: " + response.code()
                     return
                 }
+                textViewResult.text = ""
                 val posts = response.body()!!
                 for (post in posts) {
                     var content = "Code: ${response.code()}\n"

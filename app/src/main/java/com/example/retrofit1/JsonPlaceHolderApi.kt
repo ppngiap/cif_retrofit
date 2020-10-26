@@ -32,7 +32,7 @@ interface JsonPlaceHolderApi {
         @Field("userId") userId : Int,
         @Field("title") title: String,
         @Field("body") text: String
-    ) : Call<Post>;
+    ) : Call<Post>
 
     @FormUrlEncoded
     @POST("posts")
@@ -40,6 +40,10 @@ interface JsonPlaceHolderApi {
 
     @PUT("posts/{id}")
     fun putPost(@Path("id") id: Int, @Body post: Post) : Call<Post>
+
+    @Headers("Static-Header1: abc", "Static-Header2: cdf")
+    @PUT("posts/{id}")
+    fun putPost(@Header("Dynamic-Header") header: String, @Path("id") id: Int, @Body post: Post) : Call<Post>
 
     @PATCH("posts/{id}")
     fun patchPost(@Path("id") id: Int, @Body post: Post) : Call<Post>
