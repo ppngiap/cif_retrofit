@@ -24,11 +24,34 @@ class MainActivity : AppCompatActivity() {
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi::class.java)
 
-        getCommentsWithId()
+        createPostWithMap()
+//        createPostWithFields()
+//        createPost()
+//        getCommentsWithId()
 //        getCommentsWithUrl()
 //        getPostsWithArray()
 //        getPostsWithMap()
 //        getPosts()
+    }
+
+    private fun createPostWithMap() {
+        val map = HashMap<String, String>()
+        map.put("userId", "3")
+        map.put("title", "New Title")
+        map.put("body", "Hello from map")
+        val call: Call<Post> = jsonPlaceHolderApi.createPost(map)
+        call!!.enqueue(createPostPostCallback())
+    }
+
+    private fun createPostWithFields() {
+        val call: Call<Post> = jsonPlaceHolderApi.createPost(2, "New Title", "Hello from fields")
+        call!!.enqueue(createPostPostCallback())
+    }
+
+    private fun createPost() {
+        val post = Post(2, "New Titile", "Hello")
+        val call: Call<Post> = jsonPlaceHolderApi.createPost(post)
+        call!!.enqueue(createPostPostCallback())
     }
 
     private fun getCommentsWithId() {
@@ -45,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     private fun getPostsWithArray() {
         val ids : Array<Int?> = arrayOf(1, 4)
         val call = jsonPlaceHolderApi.posts(ids, "id", "desc")
-        call!!.enqueue(createPostCallback())
+        call!!.enqueue(createGetPostCallback())
     }
 
     private fun getPostsWithMap() {
@@ -54,12 +77,12 @@ class MainActivity : AppCompatActivity() {
         map.put("_sort", "id")
         map.put("_order", "desc")
         val call = jsonPlaceHolderApi.posts(map)
-        call!!.enqueue(createPostCallback())
+        call!!.enqueue(createGetPostCallback())
     }
 
     private fun getPosts() {
         val call = jsonPlaceHolderApi.posts()
-        call!!.enqueue(createPostCallback())
+        call!!.enqueue(createGetPostCallback())
     }
 
     private fun createCommentCallback(): Callback<List<Comment?>?> {
@@ -83,12 +106,35 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<List<Comment?>?>, t: Throwable) {
-                TODO("Not yet implemented")
+                textViewResult.text = t.message
             }
         }
     }
 
-    private fun createPostCallback(): Callback<List<Post?>?> {
+    private fun createPostPostCallback(): Callback<Post?> {
+       return object: Callback<Post?> {
+           override fun onResponse(call: Call<Post?>, response: Response<Post?>) {
+               if (!response.isSuccessful) {
+                   textViewResult.text = "Code: " + response.code()
+                   return
+               }
+               val post = response.body()!!
+               var content = ""
+               content += "ID: ${post?.id}\n"
+               content += "User ID: ${post?.userId}\n"
+               content += "Title: ${post?.title}\n"
+               content += "Text: ${post?.text}\n"
+
+               textViewResult.append(content)
+           }
+
+           override fun onFailure(call: Call<Post?>, t: Throwable) {
+               textViewResult.text = t.message
+           }
+       }
+    }
+
+    private fun createGetPostCallback(): Callback<List<Post?>?> {
         return object: Callback<List<Post?>?> {
             override fun onResponse(call: Call<List<Post?>?>, response: Response<List<Post?>?>) {
                 if (!response.isSuccessful) {
@@ -107,7 +153,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Post?>?>, t: Throwable) {}
+            override fun onFailure(call: Call<List<Post?>?>, t: Throwable) {
+                textViewResult.text = t.message
+            }
         }
     }
 }
