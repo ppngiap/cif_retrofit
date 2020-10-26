@@ -24,7 +24,10 @@ class MainActivity : AppCompatActivity() {
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi::class.java)
 
-        createPostWithMap()
+        deletePost()
+//        updatePostWithPatch()
+//        updatePostWithPut()
+//        createPostWithMap()
 //        createPostWithFields()
 //        createPost()
 //        getCommentsWithId()
@@ -34,24 +37,49 @@ class MainActivity : AppCompatActivity() {
 //        getPosts()
     }
 
+    private fun deletePost() {
+        val call = jsonPlaceHolderApi.deletePost(2)
+        call.enqueue(object: Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                textViewResult.text = "Code: " + response.code()
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                textViewResult.text = "Code: " + t.message
+            }
+        })
+    }
+
+    private fun updatePostWithPatch() {
+        val post = Post(20, null, "updatePostWithPut, should see title not null")
+        val call: Call<Post> = jsonPlaceHolderApi.patchPost(20, post)
+        call.enqueue(createPostCallback())
+    }
+
+    private fun updatePostWithPut() {
+        val post = Post(20, null, "updatePostWithPut, should see title null")
+        val call: Call<Post> = jsonPlaceHolderApi.putPost(20, post)
+        call.enqueue(createPostCallback())
+    }
+
     private fun createPostWithMap() {
         val map = HashMap<String, String>()
         map.put("userId", "3")
         map.put("title", "New Title")
         map.put("body", "Hello from map")
         val call: Call<Post> = jsonPlaceHolderApi.createPost(map)
-        call!!.enqueue(createPostPostCallback())
+        call.enqueue(createPostCallback())
     }
 
     private fun createPostWithFields() {
         val call: Call<Post> = jsonPlaceHolderApi.createPost(2, "New Title", "Hello from fields")
-        call!!.enqueue(createPostPostCallback())
+        call.enqueue(createPostCallback())
     }
 
     private fun createPost() {
         val post = Post(2, "New Titile", "Hello")
         val call: Call<Post> = jsonPlaceHolderApi.createPost(post)
-        call!!.enqueue(createPostPostCallback())
+        call.enqueue(createPostCallback())
     }
 
     private fun getCommentsWithId() {
@@ -111,7 +139,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun createPostPostCallback(): Callback<Post?> {
+    private fun createPostCallback(): Callback<Post?> {
        return object: Callback<Post?> {
            override fun onResponse(call: Call<Post?>, response: Response<Post?>) {
                if (!response.isSuccessful) {
@@ -119,9 +147,9 @@ class MainActivity : AppCompatActivity() {
                    return
                }
                val post = response.body()!!
-               var content = ""
-               content += "ID: ${post?.id}\n"
-               content += "User ID: ${post?.userId}\n"
+               var content = "Code: ${response.code()}\n"
+               content += "ID: ${post.id}\n"
+               content += "User ID: ${post.userId}\n"
                content += "Title: ${post?.title}\n"
                content += "Text: ${post?.text}\n"
 
@@ -143,7 +171,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val posts = response.body()!!
                 for (post in posts) {
-                    var content = ""
+                    var content = "Code: ${response.code()}\n"
                     content += "ID: ${post?.id}\n"
                     content += "User ID: ${post?.userId}\n"
                     content += "Title: ${post?.title}\n"
